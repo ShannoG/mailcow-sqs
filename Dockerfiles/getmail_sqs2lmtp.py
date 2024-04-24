@@ -100,7 +100,7 @@ class Getmail(threading.Thread):
         logging.info("Created the email from s3 object...")
         if self.lmtp_deliver_sqs_mail(email_message, message_destination):
           logging.info("Delete SQS message: %s" % (message))
-          self.sqs.delete_message(QueueUrl=self.sqs_url, ReceiptHandle=message['ReceiptHandle'])
+          self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
 
     def lmtp_deliver_sqs_mail(self, email_message, message_destination):
         logging.info( "LMTP deliver: start -- LMTP host: %s:%s" % (self.lmtp_hostname, self.lmtp_port))
