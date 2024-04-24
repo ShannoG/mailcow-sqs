@@ -126,11 +126,13 @@ class Getmail(threading.Thread):
                  
             #return False
           finally:
+            logging.info( "LMTP deliver: end -- LMTP host: %s:%s" % (self.lmtp_hostname, self.lmtp_port))
             lmtp.quit()
         except Exception as e:
           logging.error("LMTP deliver (Exception): %s" % (e))
           logging.error(traceback.format_exc())
           return False
+        return True
 
 ########################################################################################################################
 ########################################################################################################################
