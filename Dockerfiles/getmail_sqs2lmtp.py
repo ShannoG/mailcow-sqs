@@ -44,6 +44,7 @@ class Getmail(threading.Thread):
     aws_region = "ap-southeast-2"
     sqs = boto3.client('sqs', region_name=aws_region)
     s3 = boto3.client('s3', region_name=aws_region)
+    ses = boto3.client('ses', region_name=aws_region)
 
 
     def run(self):
@@ -114,6 +115,18 @@ class Getmail(threading.Thread):
           except socket.gaierror as e:
             logging.error("LMTP deliver (LMTP-Server is not reachable): %s" % (e))  
             return False  
+          except smtplib.SMTPRecipientsRefused as e:
+            logging.error("LMTP deliver (SMTPRecipientsRefused): %s" % (e))
+            logging.info("LMTP server rejected the recipient addresses. Raising a bounce")
+            # self.ses.send_bounce(
+            #     OriginalMessageId=email_message['Message-ID'],
+            #     BounceSender="bounces@shanmtb.com",
+            #     #Explanation='LMTP server rejected the recipient addresses. Raising a bounce',
+            #     # this exception includes a "recipient" dict which contains information about the rejected recipient(s)
+            #     BouncedRecipientInfoList=
+
+            # )
+            return False
 
           if self.lmtp_debug:
             lmtp.set_debuglevel(1)
