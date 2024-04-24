@@ -115,6 +115,12 @@ class Getmail(threading.Thread):
           except socket.gaierror as e:
             logging.error("LMTP deliver (LMTP-Server is not reachable): %s" % (e))  
             return False  
+
+          if self.lmtp_debug:
+            lmtp.set_debuglevel(1)
+
+          try:
+            lmtp.send_message(email_message, to_addrs=message_destination)
           except smtplib.SMTPRecipientsRefused as e:
             logging.error("LMTP deliver (SMTPRecipientsRefused): %s" % (e))
             logging.info("LMTP server rejected the recipient addresses. Raising a bounce")
@@ -127,12 +133,6 @@ class Getmail(threading.Thread):
 
             # )
             return False
-
-          if self.lmtp_debug:
-            lmtp.set_debuglevel(1)
-
-          try:
-            lmtp.send_message(email_message, to_addrs=message_destination)
           except Exception as e:
             logging.error("LMTP deliver (Exception - send_message): %s" % (e))
             return False
