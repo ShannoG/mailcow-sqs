@@ -49,8 +49,8 @@ class Getmail(threading.Thread):
     def run(self):
         while not self.exit_sqs_loop:
           try: 
-            self.receive_sqs_messages()
             self.event.wait(5)
+            self.receive_sqs_messages()
           except Exception as e:
             logging.error("ERROR: %s" % (e))
             #traceback.print_exc()
@@ -77,7 +77,7 @@ class Getmail(threading.Thread):
             )
             if 'Messages' in response:
               for message in response['Messages']:
-                logging.info("Received message: %s" % (message))
+                logging.info("Received message: %s" % (message['MessageId']))
                 self.process_sqs_message(message)
                 #logging.info("Deleting message: %s" % (receipt_handle))
                 #self.sqs.delete_message(
@@ -88,7 +88,7 @@ class Getmail(threading.Thread):
 
 
     def process_sqs_message(self, message):
-        logging.info("Process SQS message: %s" % (message))
+        logging.info("Process SQS message: %s" % (message['MessageId']))
         message_body = json.loads(message['Body'])
         #logging.info("Got a message body: %s" % (message_body))
         message_destination = message_body['mail']['destination']
