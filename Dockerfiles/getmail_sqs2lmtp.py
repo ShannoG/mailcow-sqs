@@ -124,14 +124,21 @@ class Getmail(threading.Thread):
           except smtplib.SMTPRecipientsRefused as e:
             logging.error("LMTP deliver (SMTPRecipientsRefused): %s" % (e))
             logging.info("LMTP server rejected the recipient addresses. Raising a bounce")
-            # self.ses.send_bounce(
-            #     OriginalMessageId=email_message['Message-ID'],
-            #     BounceSender="bounces@shanmtb.com",
-            #     #Explanation='LMTP server rejected the recipient addresses. Raising a bounce',
-            #     # this exception includes a "recipient" dict which contains information about the rejected recipient(s)
-            #     BouncedRecipientInfoList=
+            try:
+              BouncedRecipientInfoList=[]
+              for recipient in e.recipients:
+                BouncedRecipientInfoList.append({"Recipient":recipient,"BounceType":"DoesNotExist"})
+              self.ses.send_bounce(
+                  OriginalMessageId=email_message['Message-ID'],
+                  BounceSender="bounces@shanmtb.com",
+                  BouncedRecipientInfoList=BouncedRecipientInfoList
 
-            # )
+              )
+              self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
+          except Exception as e:
+            logging.error("LMTP deliver (Exception - raise_bounce): %s" % (e))
+            return False
+
             return False
           except Exception as e:
             logging.error("LMTP deliver (Exception - send_message): %s" % (e))
