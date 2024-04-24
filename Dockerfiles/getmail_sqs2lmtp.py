@@ -131,14 +131,15 @@ class Getmail(threading.Thread):
                 BouncedRecipientInfoList.append({"Recipient":recipient,"BounceType":"DoesNotExist"})
               self.ses.send_bounce(
                   OriginalMessageId=ses_message_id,
-                  BounceSender="bounces@shanmtb.com",
+                  BounceSender="bounces@" + message_destination[0].split("@")[-1],
                   BouncedRecipientInfoList=BouncedRecipientInfoList
 
               )
               return True
             except Exception as e:
               logging.error("LMTP deliver (Exception - raise_bounce): %s" % (e))
-              return False
+              logging.info("Error sending the bounce. Deleting the message from the queue anyway.")
+              return True
             return False
           except Exception as e:
             logging.error("LMTP deliver (Exception - send_message): %s" % (e))
