@@ -93,17 +93,18 @@ class Getmail(threading.Thread):
         message_body = json.loads(message['Body'])
         #logging.info("Got a message body: %s" % (message_body))
         message_destination = message_body['mail']['destination']
+        ses_message_id = message_body['mail']['messageId']
         #logging.info("Got a message destination: %s" % (message_destination))
         # Fetch the object from s3
         s3_object = self.s3.get_object(Bucket=message_body['receipt']['action']['bucketName'], Key=message_body['receipt']['action']['objectKey'])
         logging.info("Create the email from s3 object...")
         email_message = email.message_from_bytes(s3_object['Body'].read())
         logging.info("Created the email from s3 object...")
-        if self.lmtp_deliver_sqs_mail(email_message, message_destination):
+        if self.lmtp_deliver_sqs_mail(email_message, message_destination, ses_message_id):
           logging.info("Delete SQS message: %s" % (message))
           self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
 
-    def lmtp_deliver_sqs_mail(self, email_message, message_destination):
+    def lmtp_deliver_sqs_mail(self, email_message, message_destination, ses_message_id):
         logging.info( "LMTP deliver: start -- LMTP host: %s:%s" % (self.lmtp_hostname, self.lmtp_port))
         try: 
          
@@ -129,7 +130,7 @@ class Getmail(threading.Thread):
               for recipient in e.recipients:
                 BouncedRecipientInfoList.append({"Recipient":recipient,"BounceType":"DoesNotExist"})
               self.ses.send_bounce(
-                  OriginalMessageId=email_message['Message-ID'],
+                  OriginalMessageId=ses_message_id,
                   BounceSender="bounces@shanmtb.com",
                   BouncedRecipientInfoList=BouncedRecipientInfoList
 
