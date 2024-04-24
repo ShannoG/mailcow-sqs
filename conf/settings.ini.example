@@ -1,0 +1,11 @@
+[DEFAULT]
+#sqs_queue_url:     MUST_BE_DEFINED_INDIVIDUALLY
+sqs_queue_wait_time_seconds: 299
+lmtp_hostname:     dovecot-mailcow
+lmtp_port:         24
+lmtp_debug:        False
+lmtp_recipient:    CHANGE-ME@YOUR-MAILCOW-MAILBOX-ADDRESS.EXAMPLE
+
+#[example_insecure_test1_gmx.de]
+#sqs_queue_url:     sqs-queue
+#sqs_queue_wait_time_seconds: 299
