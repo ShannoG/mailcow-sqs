@@ -96,7 +96,8 @@ class Getmail(threading.Thread):
         # Fetch the object from s3
         s3_object = self.s3.get_object(Bucket=message_body['receipt']['action']['bucketName'], Key=message_body['receipt']['action']['objectKey'])
         logging.info("Create the email from s3 object...")
-        email_message = email.message_from_bytes(s3_object['Body'].read()[b'RFC822'])
+        email_message = email.message_from_bytes(s3_object['Body'].read())
+        logging.info("Created the email from s3 object...")
         if self.lmtp_deliver_sqs_mail(email_message, message_destination):
           logging.info("Delete SQS message: %s" % (message))
           self.sqs.delete_message(QueueUrl=self.sqs_url, ReceiptHandle=message['ReceiptHandle'])
