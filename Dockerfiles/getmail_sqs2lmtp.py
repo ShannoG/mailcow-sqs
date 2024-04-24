@@ -135,10 +135,9 @@ class Getmail(threading.Thread):
 
               )
               self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
-          except Exception as e:
-            logging.error("LMTP deliver (Exception - raise_bounce): %s" % (e))
-            return False
-
+            except Exception as e:
+              logging.error("LMTP deliver (Exception - raise_bounce): %s" % (e))
+              return False
             return False
           except Exception as e:
             logging.error("LMTP deliver (Exception - send_message): %s" % (e))
