@@ -20,8 +20,6 @@ RUN pip install imapclient boto3
 
 USER appuser
 
-RUN echo `ls -al`
-RUN echo pwd
 # add this to the image from the git repo instead of from disk...
 COPY Dockerfiles/getmail_sqs2lmtp.py .
 CMD [ "python","-u", "/app/getmail_sqs2lmtp.py" ]
