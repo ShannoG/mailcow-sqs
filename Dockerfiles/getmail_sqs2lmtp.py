@@ -34,9 +34,9 @@ class Getmail(threading.Thread):
         self.exception_counter = 0
         self.print_lock = threading.Lock()
 
-        self.lmtp_hostname    = configparser_file.get(       config_name, 'lmtp_hostname')
-        self.lmtp_port        = configparser_file.getint(    config_name, 'lmtp_port')
-        self.lmtp_debug       = configparser_file.getboolean(config_name, 'lmtp_debug')
+        self.smtp_hostname    = configparser_file.get(       config_name, 'smtp_hostname')
+        self.smtp_port        = configparser_file.getint(    config_name, 'smtp_port')
+        self.smtp_debug       = configparser_file.getboolean(config_name, 'smtp_debug')
 
         self.sqs_queue_url = configparser_file.get(config_name, 'sqs_queue_url')
         self.sqs_queue_wait_time_seconds = configparser_file.getint(config_name, 'sqs_queue_wait_time_seconds')  
@@ -80,8 +80,6 @@ class Getmail(threading.Thread):
               for message in response['Messages']:
                 logging.info("Received message: %s" % (message['MessageId']))
                 self.process_sqs_message(message)
-                #logging.info("Deleting message: %s" % (receipt_handle))
-                #self.sqs.delete_message(
           except Exception as e:
             logging.error("Recieve SQS (Exception - send_message): %s" % (e))
             return False
@@ -100,31 +98,31 @@ class Getmail(threading.Thread):
         logging.info("Create the email from s3 object...")
         email_message = email.message_from_bytes(s3_object['Body'].read())
         logging.info("Created the email from s3 object...")
-        if self.lmtp_deliver_sqs_mail(email_message, message_destination, ses_message_id):
-          logging.info("Delete SQS message: %s" % (message))
+        if self.smtp_deliver_sqs_mail(email_message, message_destination, ses_message_id):
+          logging.info("Delete SQS message: %s" % (message['MessageId']))
           self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
 
-    def lmtp_deliver_sqs_mail(self, email_message, message_destination, ses_message_id):
-        logging.info( "LMTP deliver: start -- LMTP host: %s:%s" % (self.lmtp_hostname, self.lmtp_port))
+    def smtp_deliver_sqs_mail(self, email_message, message_destination, ses_message_id):
+        logging.info( "SMTP deliver: start -- SMTP host: %s:%s" % (self.smtp_hostname, self.smtp_port))
         try: 
          
           try:
-            lmtp = smtplib.LMTP(self.lmtp_hostname, self.lmtp_port)
+            smtp = smtplib.SMTP(self.smtp_hostname, self.smtp_port)
           except ConnectionRefusedError as e:
-            logging.error("LMTP deliver (ConnectionRefusedError): %s" % (e))
+            logging.error("SMTP deliver (ConnectionRefusedError): %s" % (e))
             return False
           except socket.gaierror as e:
-            logging.error("LMTP deliver (LMTP-Server is not reachable): %s" % (e))  
+            logging.error("SMTP deliver (SMTP-Server is not reachable): %s" % (e))  
             return False  
 
-          if self.lmtp_debug:
-            lmtp.set_debuglevel(1)
+          if self.smtp_debug:
+            smtp.set_debuglevel(1)
 
           try:
-            lmtp.send_message(email_message, to_addrs=message_destination)
+            smtp.send_message(email_message, to_addrs=message_destination)
           except smtplib.SMTPRecipientsRefused as e:
-            logging.error("LMTP deliver (SMTPRecipientsRefused): %s" % (e))
-            logging.info("LMTP server rejected the recipient addresses. Raising a bounce")
+            logging.error("SMTP deliver (SMTPRecipientsRefused): %s" % (e))
+            logging.info("SMTP server rejected the recipient addresses. Raising a bounce")
             try:
               BouncedRecipientInfoList=[]
               for recipient in e.recipients:
@@ -137,20 +135,20 @@ class Getmail(threading.Thread):
               )
               return True
             except Exception as e:
-              logging.error("LMTP deliver (Exception - raise_bounce): %s" % (e))
+              logging.error("SMTP deliver (Exception - raise_bounce): %s" % (e))
               logging.info("Error sending the bounce. Deleting the message from the queue anyway.")
               return True
             return False
           except Exception as e:
-            logging.error("LMTP deliver (Exception - send_message): %s" % (e))
+            logging.error("SMTP deliver (Exception - send_message): %s" % (e))
             return False
                  
             #return False
           finally:
-            logging.info( "LMTP deliver: end -- LMTP host: %s:%s" % (self.lmtp_hostname, self.lmtp_port))
-            lmtp.quit()
+            logging.info( "SMTP deliver: end -- sMTP host: %s:%s" % (self.smtp_hostname, self.smtp_port))
+            smtp.quit()
         except Exception as e:
-          logging.error("LMTP deliver (Exception): %s" % (e))
+          logging.error("SMTP deliver (Exception): %s" % (e))
           logging.error(traceback.format_exc())
           return False
         return True
