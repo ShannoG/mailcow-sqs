@@ -90,9 +90,9 @@ class Getmail(threading.Thread):
         logging.info("Process SQS message: %s" % (message['MessageId']))
         message_body = json.loads(message['Body'])
         #logging.info("Got a message body: %s" % (message_body))
-        message_destination = message_body['mail']['destination']
+        message_destination = message_body['receipt']['recipients']
         ses_message_id = message_body['mail']['messageId']
-        #logging.info("Got a message destination: %s" % (message_destination))
+        logging.info("Got a message destination: %s" % (message_destination))
         # Fetch the object from s3
         s3_object = self.s3.get_object(Bucket=message_body['receipt']['action']['bucketName'], Key=message_body['receipt']['action']['objectKey'])
         logging.info("Create the email from s3 object...")
