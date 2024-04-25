@@ -20,5 +20,6 @@ RUN pip install imapclient boto3
 
 USER appuser
 
-COPY ./getmail_sqs2lmtp.py .
+# add this to the image from the git repo instead of from disk...
+COPY getmail_sqs2lmtp.py .
 CMD [ "python","-u", "/app/getmail_sqs2lmtp.py" ]

@@ -1,10 +1,16 @@
-version: '2.1'
 services:
-
-    dovecot-mailcow:
+    getmail-mailcow:
+      #image: cb/getmail:latest
+      build: ./Dockerfiles/     # for local build
+      # build:
+      #   context: https://github.com/christianbur/getmail.git#master
+      #   dockerfile: Dockerfiles/Dockerfile
+      environment:
+        - TZ=${TZ}   # if you do not have a global TZ environment variable, use your TZ identifier (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), e.g. TZ="Europe/Berlin"
+      volumes:
+        - ./conf/settings.ini:/app/settings.ini:ro
+      restart: always
       networks:
-        network-getmail:
-
-networks:
-  network-getmail:
-    external: true    
+        mailcow-network:
+          aliases:
+            - getmail
