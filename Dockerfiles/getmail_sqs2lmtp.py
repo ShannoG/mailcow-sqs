@@ -87,20 +87,24 @@ class Getmail(threading.Thread):
 
 
     def process_sqs_message(self, message):
-        logging.info("Process SQS message: %s" % (message['MessageId']))
-        message_body = json.loads(message['Body'])
-        #logging.info("Got a message body: %s" % (message_body))
-        message_destination = message_body['receipt']['recipients']
-        ses_message_id = message_body['mail']['messageId']
-        logging.info("Got a message destination: %s" % (message_destination))
-        # Fetch the object from s3
-        s3_object = self.s3.get_object(Bucket=message_body['receipt']['action']['bucketName'], Key=message_body['receipt']['action']['objectKey'])
-        logging.info("Create the email from s3 object...")
-        email_message = email.message_from_bytes(s3_object['Body'].read())
-        logging.info("Created the email from s3 object...")
-        if self.smtp_deliver_sqs_mail(email_message, message_destination, ses_message_id):
-          logging.info("Delete SQS message: %s" % (message['MessageId']))
-          self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
+        try:
+          logging.info("Process SQS message: %s" % (message['MessageId']))
+          message_body = json.loads(message['Body'])
+          #logging.info("Got a message body: %s" % (message_body))
+          message_destination = message_body['receipt']['recipients']
+          ses_message_id = message_body['mail']['messageId']
+          logging.info("Got a message destination: %s" % (message_destination))
+          # Fetch the object from s3
+          s3_object = self.s3.get_object(Bucket=message_body['receipt']['action']['bucketName'], Key=message_body['receipt']['action']['objectKey'])
+          logging.info("Create the email from s3 object...")
+          email_message = email.message_from_bytes(s3_object['Body'].read())
+          logging.info("Created the email from s3 object...")
+          if self.smtp_deliver_sqs_mail(email_message, message_destination, ses_message_id):
+            logging.info("Delete SQS message: %s" % (message['MessageId']))
+            self.sqs.delete_message(QueueUrl=self.sqs_queue_url, ReceiptHandle=message['ReceiptHandle'])
+        except Exception as e:
+          logging.error("Process SQS (Exception - process_sqs_message): %s" % (e))
+          return False
 
     def smtp_deliver_sqs_mail(self, email_message, message_destination, ses_message_id):
         logging.info( "SMTP deliver: start -- SMTP host: %s:%s" % (self.smtp_hostname, self.smtp_port))
