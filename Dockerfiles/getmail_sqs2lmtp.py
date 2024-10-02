@@ -139,6 +139,10 @@ class Getmail(threading.Thread):
               logging.info("Error sending the bounce. Deleting the message from the queue anyway.")
               return True
             return False
+          except smtplib.SMTPSenderRefused as e:
+            logging.error("SMTP deliver (SMTPSenderRefused): %s" % (e))
+            logging.info("SMTP server rejected the sender addresses. Silently discarding.")
+            return True
           except Exception as e:
             logging.error("SMTP deliver (Exception - send_message): %s" % (e))
             return False
