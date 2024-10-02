@@ -73,7 +73,7 @@ class Getmail(threading.Thread):
                 MessageAttributeNames=[
                     'All'
                 ],
-                VisibilityTimeout=0,
+                VisibilityTimeout=300, # Let's wait 5 mminutes before reprocessing a message to avoid thrashing.
                 WaitTimeSeconds=self.sqs_queue_wait_time_seconds
             )
             if 'Messages' in response:
